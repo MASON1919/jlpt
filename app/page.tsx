@@ -10,6 +10,8 @@ import {
   FileText,
   Zap,
 } from "lucide-react";
+import Footer from "../components/Footer";
+import SubscribeButton from "../components/SubscribeButton";
 
 export default function LandingPageSerene() {
   return (
@@ -62,7 +64,7 @@ export default function LandingPageSerene() {
         </div>
       </header>
 
-      {/* 2. Running Text (일본어로 변경하여 장식 효과) */}
+      {/* 2. 일본어 장식 */}
       <div className="w-full bg-[#2C241B] py-6 overflow-hidden whitespace-nowrap">
         <div className="inline-flex animate-infinite-scroll">
           {[...Array(10)].map((_, i) => (
@@ -76,7 +78,7 @@ export default function LandingPageSerene() {
         </div>
       </div>
 
-      {/* 3. 핵심 기능 소개 (Features) */}
+      {/* 3. 핵심 기능 소개 */}
       <section
         id="features"
         className="py-32 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto"
@@ -276,9 +278,8 @@ export default function LandingPageSerene() {
                   무제한 저장
                 </li>
               </ul>
-              <button className="w-full py-4 rounded-xl bg-[#C84B31] text-white font-bold hover:bg-[#A63620] transition-colors shadow-lg shadow-[#C84B31]/30">
-                7일 무료 체험 시작하기
-              </button>
+
+              <SubscribeButton />
             </div>
           </div>
         </div>
@@ -378,32 +379,7 @@ export default function LandingPageSerene() {
         </div>
       </section>
 
-      {/* 6. 푸터 */}
-      <footer className="bg-[#2C241B] text-[#EBE7DF]/60 py-20">
-        <div className="max-w-7xl mx-auto px-4 text-center">
-          <h2 className="font-serif text-3xl text-[#EBE7DF] mb-8">
-            JLPT MASTER
-          </h2>
-          <div className="flex justify-center gap-8 mb-12 text-sm font-medium">
-            <Link href="#" className="hover:text-white">
-              서비스 소개
-            </Link>
-            <Link href="#features" className="hover:text-white">
-              주요 기능
-            </Link>
-            <Link href="#pricing" className="hover:text-white">
-              요금제
-            </Link>
-            <Link href="#" className="hover:text-white">
-              문의하기
-            </Link>
-          </div>
-          <p className="text-xs">
-            © 2025 JLPT Master Inc. All rights reserved.{" "}
-            <br className="sm:hidden" /> Designed for calm learning.
-          </p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

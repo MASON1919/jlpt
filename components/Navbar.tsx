@@ -11,6 +11,8 @@ export function Navbar() {
   const pathname = usePathname();
 
   if (pathname?.startsWith("/practice/solve")) return null;
+  else if (pathname?.startsWith("/payment")) return null;
+  else if(pathname?.startsWith("/mypage")) return null;
 
   return (
     <nav className="fixed top-6 left-1/2 -translate-x-1/2 w-[95%] max-w-6xl z-50">
@@ -81,6 +83,13 @@ export function Navbar() {
                 <span className="text-sm font-bold text-[#2C241B] hidden sm:block truncate max-w-[100px]">
                   {session.user?.name}
                 </span>
+                <Link 
+                  href="/mypage" 
+                  className="bg-gray-100 p-1.5 rounded-full hover:bg-gray-200 transition-colors"
+                  title="마이 페이지"
+                >
+                  <User className="w-4 h-4 text-gray-600" />
+                </Link>
               </div>
               <button
                 onClick={() => signOut({ callbackUrl: "/" })}

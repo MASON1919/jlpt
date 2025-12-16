@@ -13,8 +13,6 @@ import {
   CheckCircle2,
 } from "lucide-react";
 
-// 목업 데이터: 시험지 목록
-// 실제로는 DB에서 fetch 해야 함 (status: 'new' | 'completed' | 'locked')
 const MOCK_EXAMS = [
   {
     id: 1,

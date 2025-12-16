@@ -15,10 +15,10 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // 1. 해당 조건의 문제 개수 확인
     const count = await prisma.problem.count({
       where: {
         level: parseInt(level),
+
         type: type.toUpperCase() as ProblemType,
       },
     });
@@ -30,10 +30,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // 2. 랜덤 오프셋 생성
     const skip = Math.floor(Math.random() * count);
-
-    // 3. 랜덤 문제 1개 조회
     const problems = await prisma.problem.findMany({
       where: {
         level: parseInt(level),
