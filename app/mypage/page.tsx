@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { User, CreditCard, Settings, Calendar, Shield, Zap, ExternalLink, LogOut } from "lucide-react";
 import MyPageSubscribeButton from "./MyPageSubscribeButton";
+import CancelSubscriptionButton from "./CancelSubscriptionButton";
 
 export const metadata = {
   title: "마이 페이지 - JLPT NEXT",
@@ -162,20 +163,29 @@ export default async function MyPage() {
                         )}
 
                         {!isExpired && (
-                            <div className="flex items-center justify-between pt-2">
-                                <span className="text-sm text-gray-500">결제 및 구독 설정</span>
-                                {user.customerPortalUrl ? (
-                                    <a 
-                                        href={user.customerPortalUrl} 
-                                        target="_blank" 
-                                        rel="noopener noreferrer"
-                                        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-gray-200 text-gray-700 text-sm font-medium hover:bg-gray-50 hover:text-gray-900 transition-colors shadow-sm"
-                                    >
-                                        <Settings className="w-4 h-4" />
-                                        구독 관리
-                                    </a>
-                                ) : (
-                                    <span className="text-sm text-gray-400">관리 페이지 정보 없음</span>
+                            <div className="flex flex-col gap-4 pt-2">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-sm text-gray-500">결제 및 구독 설정</span>
+                                    {user.customerPortalUrl ? (
+                                        <a 
+                                            href={user.customerPortalUrl} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer"
+                                            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-gray-200 text-gray-700 text-sm font-medium hover:bg-gray-50 hover:text-gray-900 transition-colors shadow-sm"
+                                        >
+                                            <Settings className="w-4 h-4" />
+                                            구독 관리
+                                        </a>
+                                    ) : (
+                                        <span className="text-sm text-gray-400">관리 페이지 정보 없음</span>
+                                    )}
+                                </div>
+                                
+                                {user.subscriptionStatus !== "cancelled" && (
+                                  <div className="flex items-center justify-between border-t border-gray-100 pt-4">
+                                    <span className="text-sm text-gray-500">구독을 그만두시겠어요?</span>
+                                    <CancelSubscriptionButton />
+                                  </div>
                                 )}
                             </div>
                         )}
