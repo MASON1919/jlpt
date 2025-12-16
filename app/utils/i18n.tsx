@@ -1,6 +1,6 @@
 // utils/i18n.ts
 
-// 다국어 JSON에서 현재 유저 언어에 맞는 텍스트 추출
+/*
 export function getLocalizedText(
   data: any, 
   lang: 'KO' | 'EN', 
@@ -27,8 +27,7 @@ const ProblemCard = ({ problem, userLang }) => {
   return (
     <div>
        <h1>{questionText}</h1>
-       {/* ... */}
        <p>{explanationText}</p>
     </div>
   )
-}
+}*/
