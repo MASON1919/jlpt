@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, Suspense } from "react"; // ★ Suspense 추가
 import { useSearchParams, useRouter } from "next/navigation";
 import { ArrowLeft, RefreshCw, BookOpen, AlertCircle, CheckCircle2, XCircle, Save } from "lucide-react";
 
@@ -51,7 +51,7 @@ type Problem = {
     en?: string;
   };
   vocab?: Vocab[];
-  grammar?: unknown[]; // Defined as empty array in prompt, but good to have type
+  grammar?: unknown[];
 };
 
 // --- Components ---
@@ -81,7 +81,8 @@ const ErrorState = ({ message, onRetry }: { message: string; onRetry: () => void
   </div>
 );
 
-export default function SolvePage() {
+// ★ 1. 기존 SolvePage 컴포넌트의 이름을 SolveContent로 변경하고 export default 제거
+function SolveContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const level = searchParams.get("level");
@@ -132,11 +133,12 @@ export default function SolvePage() {
 
   useEffect(() => {
     if (!level || !type) {
-      router.push("/practice");
-      return;
+      // router.push는 렌더링 중에 바로 실행하면 안 되므로 useEffect 안에서 체크하거나
+      // 혹은 아래 렌더링 로직에서 null 리턴 처리
+      return; 
     }
     fetchProblem();
-  }, [level, type, router, fetchProblem]);
+  }, [level, type, fetchProblem]);
 
   const handleSubmit = () => {
     if (selectedOption === null) return;
@@ -144,11 +146,15 @@ export default function SolvePage() {
     setShowExplanation(true);
   };
 
+  // URL 파라미터가 없으면 리다이렉트 (useEffect에서 처리하지만 깜빡임 방지용)
+  if (!level || !type) {
+      // 여기서는 null을 리턴하고 useEffect에서 이동시킴
+      return null; 
+  }
+
   if (loading) return <LoadingState />;
   if (error) return <ErrorState message={error} onRetry={fetchProblem} />;
   if (!problem) return null;
-
-
 
   return (
     <div className="min-h-screen bg-[#EBE7DF] pb-20">
@@ -356,5 +362,15 @@ export default function SolvePage() {
         </div>
       )}
     </div>
+  );
+}
+
+// ★ 2. 새로 만든 껍데기(Wrapper) 컴포넌트를 default export로 내보냄
+// Suspense로 감싸서 "URL 파라미터를 읽어오는 중일 때 LoadingState를 보여줘라" 라고 설정
+export default function SolvePage() {
+  return (
+    <Suspense fallback={<LoadingState />}>
+      <SolveContent />
+    </Suspense>
   );
 }
