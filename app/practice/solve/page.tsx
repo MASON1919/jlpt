@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useCallback, Suspense } from "react"; // ★ Suspense 추가
 import { useSearchParams, useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { ArrowLeft, RefreshCw, BookOpen, AlertCircle, CheckCircle2, XCircle, Save } from "lucide-react";
 
 // --- Types ---
@@ -38,10 +39,24 @@ type Vocab = {
   };
 };
 
+type GrammarItem = {
+  title: string;
+  hurigana?: string;
+  meaning_simple?: {
+    ko: string;
+    en?: string;
+  };
+  explanation?: {
+    ko: string;
+    en?: string;
+  };
+};
+
 type Problem = {
   id: number;
   level: number;
   type: string;
+  subType: string;
   question: MultiLangText;
   content: Content;
   options: Option[];
@@ -51,7 +66,7 @@ type Problem = {
     en?: string;
   };
   vocab?: Vocab[];
-  grammar?: unknown[];
+  grammar?: GrammarItem[];
 };
 
 // --- Components ---
@@ -85,6 +100,7 @@ const ErrorState = ({ message, onRetry }: { message: string; onRetry: () => void
 function SolveContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { data: session } = useSession();
   const level = searchParams.get("level");
   const type = searchParams.get("type");
 
@@ -99,6 +115,7 @@ function SolveContent() {
   const [showQuestionTrans, setShowQuestionTrans] = useState(false);
   const [activeSentenceIndex, setActiveSentenceIndex] = useState<number | null>(null);
   const [activeVocab, setActiveVocab] = useState<Vocab | null>(null);
+  const [activeGrammar, setActiveGrammar] = useState<GrammarItem | null>(null);
 
   const fetchProblem = useCallback(async () => {
     if (!level || !type) return;
@@ -111,6 +128,7 @@ function SolveContent() {
     setShowQuestionTrans(false);
     setActiveSentenceIndex(null);
     setActiveVocab(null);
+    setActiveGrammar(null);
 
     try {
       const res = await fetch(`/api/practice/problem?level=${level}&type=${type}`);
@@ -140,10 +158,34 @@ function SolveContent() {
     fetchProblem();
   }, [level, type, fetchProblem]);
 
-  const handleSubmit = () => {
-    if (selectedOption === null) return;
+  const handleSubmit = async () => {
+    if (selectedOption === null || !problem) return;
+    
+    const answerOptionId = problem.options[problem.answerIndex]?.id;
+    const isCorrect = selectedOption === answerOptionId;
+    
     setIsSubmitted(true);
     setShowExplanation(true);
+    
+    // Record statistics to Firestore (async, non-blocking)
+    if (session?.user) {
+      try {
+        await fetch("/api/stats/record", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: (session.user as { id?: string }).id,
+            level: problem.level,
+            problemType: problem.type,
+            problemSubType: problem.subType,
+            isCorrect,
+          }),
+        });
+      } catch (error) {
+        console.error("Failed to record stats:", error);
+        // Silently fail - don't block user experience
+      }
+    }
   };
 
   // URL 파라미터가 없으면 리다이렉트 (useEffect에서 처리하지만 깜빡임 방지용)
@@ -333,6 +375,15 @@ function SolveContent() {
                     {v.word}
                   </button>
                 ))}
+                {problem.grammar?.map((g, idx) => (
+                  <button
+                    key={`grammar-${idx}`}
+                    onClick={() => setActiveGrammar(g)}
+                    className="px-3 py-1.5 bg-[#EBF5FF] text-[#2563EB] rounded-lg text-sm font-medium hover:bg-[#2563EB] hover:text-white transition-colors border border-[#2563EB]/20"
+                  >
+                    {g.title}
+                  </button>
+                ))}
               </div>
             )}
           </section>
@@ -358,6 +409,42 @@ function SolveContent() {
                 <p className="text-sm text-[#5D5548]/60 mt-1">{activeVocab.meaning.en}</p>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Grammar Modal/Popup */}
+      {activeGrammar && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm" onClick={() => setActiveGrammar(null)}>
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <h3 className="text-2xl font-bold text-[#2C241B]">{activeGrammar.title}</h3>
+                {activeGrammar.hurigana && (
+                  <p className="text-[#2563EB]">{activeGrammar.hurigana}</p>
+                )}
+              </div>
+              <button onClick={() => setActiveGrammar(null)} className="text-[#D8D3C8] hover:text-[#2C241B]">
+                <XCircle className="w-6 h-6" />
+              </button>
+            </div>
+            {activeGrammar.meaning_simple && (
+              <div className="pt-4 border-t border-[#F5F5F0]">
+                <p className="text-lg text-[#5D5548] font-medium">{activeGrammar.meaning_simple.ko}</p>
+                {activeGrammar.meaning_simple.en && (
+                  <p className="text-sm text-[#5D5548]/60 mt-1">{activeGrammar.meaning_simple.en}</p>
+                )}
+              </div>
+            )}
+            {activeGrammar.explanation && (
+              <div className="mt-4 pt-4 border-t border-[#F5F5F0]">
+                <p className="text-sm font-bold text-[#2C241B] mb-2">상세 설명</p>
+                <p className="text-[#5D5548] text-sm leading-relaxed whitespace-pre-line">{activeGrammar.explanation.ko}</p>
+                {activeGrammar.explanation.en && (
+                  <p className="text-xs text-[#5D5548]/60 mt-2 whitespace-pre-line">{activeGrammar.explanation.en}</p>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}

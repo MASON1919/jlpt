@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
+import { SubscriptionStatus, SubscriptionEvent } from "@prisma/client";
 
 export async function POST(req: NextRequest) {
   try {
@@ -11,7 +12,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Secret missing" }, { status: 500 });
     }
 
-    // 요청 데이터(Raw Body)와 서명(Signature) 확보
     const rawBody = await req.text();
     const signature = req.headers.get("x-signature") || "";
 
@@ -38,55 +38,220 @@ export async function POST(req: NextRequest) {
 
     console.log(`🔔 Webhook: ${eventName} (User: ${userId})`);
 
-    // 이벤트별 DB 업데이트 (Provider 필드 추가됨!)
+    const externalId = `${data.id}`;
+    const renewsAt = new Date(data.attributes.renews_at);
+    const createdAt = new Date(data.attributes.created_at);
+    const customerPortalUrl = data.attributes.urls?.customer_portal;
+
+    // Map Lemon Squeezy status to our enum
+    const mapStatus = (lsStatus: string): SubscriptionStatus => {
+      switch (lsStatus) {
+        case "active":
+        case "on_trial":
+          return "ACTIVE";
+        case "cancelled":
+          return "CANCELLED";
+        case "expired":
+          return "EXPIRED";
+        case "past_due":
+          return "PAST_DUE";
+        case "paused":
+          return "PAUSED";
+        default:
+          return "ACTIVE";
+      }
+    };
+
     switch (eventName) {
-      // ✅ 구독 시작 (첫 결제)
-      case "subscription_created":
-      // ✅ 구독 갱신 (매달 자동 결제)
-      case "subscription_updated":
-        await prisma.user.update({
-          where: { id: userId },
+      case "subscription_created": {
+        // 구독 생성
+        const subscription = await prisma.subscription.create({
           data: {
-            isPro: true, // 유료 회원 등업
-
-            // ★ 핵심: 결제 출처 기록 (나중에 앱 결제랑 구분용)
-            subscriptionProvider: "LEMON_SQUEEZY",
-
-            subscriptionId: `${data.id}`, // 레몬스퀴지 구독 ID
-            subscriptionStatus: data.attributes.status, // "active"
-            currentPeriodEnd: new Date(data.attributes.renews_at), // 다음 결제일
-            customerPortalUrl: data.attributes.urls.customer_portal,
+            userId,
+            provider: "LEMON_SQUEEZY",
+            externalId,
+            status: mapStatus(data.attributes.status),
+            currentPeriodStart: createdAt,
+            currentPeriodEnd: renewsAt,
+            customerPortalUrl,
           },
         });
-        break;
 
-      // 구독 취소 (해지 버튼 누름)
-      // (즉시 권한 박탈하지 않고, 상태만 'cancelled'로 변경 -> 만료일까지는 사용 가능하게)
-      case "subscription_cancelled":
-        await prisma.user.update({
-          where: { id: userId },
+        // 히스토리 기록
+        await prisma.subscriptionHistory.create({
           data: {
-            subscriptionStatus: "cancelled",
-            // isPro는 건드리지 않습니다. (남은 기간 동안 써야 하니까)
+            subscriptionId: subscription.id,
+            event: "CREATED",
+            newStatus: subscription.status,
+            metadata: { lemonSqueezyData: data.attributes },
           },
         });
-        break;
 
-      // 구독 완전 만료 (기간 끝남 / 결제 실패로 종료)
-      case "subscription_expired":
+        // User isPro 업데이트
         await prisma.user.update({
           where: { id: userId },
-          data: {
-            isPro: false, // 권한 박탈
-            subscriptionStatus: "expired",
-          },
+          data: { isPro: true },
         });
         break;
+      }
+
+      case "subscription_updated": {
+        // 기존 구독 찾기
+        const existingSubscription = await prisma.subscription.findFirst({
+          where: { externalId },
+        });
+
+        if (existingSubscription) {
+          const previousStatus = existingSubscription.status;
+          const newStatus = mapStatus(data.attributes.status);
+
+          await prisma.subscription.update({
+            where: { id: existingSubscription.id },
+            data: {
+              status: newStatus,
+              currentPeriodEnd: renewsAt,
+              customerPortalUrl,
+            },
+          });
+
+          // 히스토리 기록 (갱신)
+          await prisma.subscriptionHistory.create({
+            data: {
+              subscriptionId: existingSubscription.id,
+              event: "RENEWED",
+              previousStatus,
+              newStatus,
+              metadata: { lemonSqueezyData: data.attributes },
+            },
+          });
+
+          // User isPro 업데이트 (active면 true)
+          await prisma.user.update({
+            where: { id: userId },
+            data: { isPro: newStatus === "ACTIVE" },
+          });
+        } else {
+          // 구독이 없으면 새로 생성 (fallback)
+          const subscription = await prisma.subscription.create({
+            data: {
+              userId,
+              provider: "LEMON_SQUEEZY",
+              externalId,
+              status: mapStatus(data.attributes.status),
+              currentPeriodStart: createdAt,
+              currentPeriodEnd: renewsAt,
+              customerPortalUrl,
+            },
+          });
+
+          await prisma.subscriptionHistory.create({
+            data: {
+              subscriptionId: subscription.id,
+              event: "CREATED",
+              newStatus: subscription.status,
+            },
+          });
+
+          await prisma.user.update({
+            where: { id: userId },
+            data: { isPro: true },
+          });
+        }
+        break;
+      }
+
+      case "subscription_cancelled": {
+        const subscription = await prisma.subscription.findFirst({
+          where: { externalId },
+        });
+
+        if (subscription) {
+          const previousStatus = subscription.status;
+
+          await prisma.subscription.update({
+            where: { id: subscription.id },
+            data: {
+              status: "CANCELLED",
+              cancelledAt: new Date(),
+            },
+          });
+
+          await prisma.subscriptionHistory.create({
+            data: {
+              subscriptionId: subscription.id,
+              event: "CANCELLED",
+              previousStatus,
+              newStatus: "CANCELLED",
+            },
+          });
+
+          // 취소해도 기간 만료 전까지는 isPro 유지
+          // (만료 시점에 별도 webhook이 옴)
+        }
+        break;
+      }
+
+      case "subscription_expired": {
+        const subscription = await prisma.subscription.findFirst({
+          where: { externalId },
+        });
+
+        if (subscription) {
+          const previousStatus = subscription.status;
+
+          await prisma.subscription.update({
+            where: { id: subscription.id },
+            data: { status: "EXPIRED" },
+          });
+
+          await prisma.subscriptionHistory.create({
+            data: {
+              subscriptionId: subscription.id,
+              event: "EXPIRED",
+              previousStatus,
+              newStatus: "EXPIRED",
+            },
+          });
+
+          // 만료되면 권한 박탈
+          await prisma.user.update({
+            where: { id: userId },
+            data: { isPro: false },
+          });
+        }
+        break;
+      }
+
+      case "subscription_payment_failed": {
+        const subscription = await prisma.subscription.findFirst({
+          where: { externalId },
+        });
+
+        if (subscription) {
+          const previousStatus = subscription.status;
+
+          await prisma.subscription.update({
+            where: { id: subscription.id },
+            data: { status: "PAST_DUE" },
+          });
+
+          await prisma.subscriptionHistory.create({
+            data: {
+              subscriptionId: subscription.id,
+              event: "PAYMENT_FAILED",
+              previousStatus,
+              newStatus: "PAST_DUE",
+              metadata: { lemonSqueezyData: data.attributes },
+            },
+          });
+        }
+        break;
+      }
     }
 
     return NextResponse.json({ received: true }, { status: 200 });
   } catch (error) {
-    console.error("🔥 Webhook Error:", error);
+    console.error("Webhook Error:", error);
     return NextResponse.json(
       { error: "Webhook handler failed" },
       { status: 500 }

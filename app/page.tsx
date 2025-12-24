@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import {
   ArrowRight,
@@ -12,10 +14,19 @@ import {
 } from "lucide-react";
 import Footer from "../components/Footer";
 import SubscribeButton from "../components/SubscribeButton";
+import LanguageSelector from "../components/LanguageSelector";
+import { useLanguage } from "@/lib/i18n";
 
 export default function LandingPageSerene() {
+  const { t } = useLanguage();
+
   return (
     <div className="min-h-screen bg-[#EBE7DF] text-[#2C241B] font-sans selection:bg-[#C84B31] selection:text-white">
+      {/* Language Selector - Fixed top right */}
+      <div className="fixed top-4 right-4 z-50">
+        <LanguageSelector variant="light" />
+      </div>
+
       {/* 1. 와이드 히어로 섹션 */}
       <header className="relative w-full h-screen min-h-[700px] flex flex-col justify-center items-center overflow-hidden px-4">
         {/* 배경 */}
@@ -27,33 +38,33 @@ export default function LandingPageSerene() {
 
         <div className="relative z-10 text-center max-w-5xl mx-auto space-y-8">
           <div className="inline-block border border-[#2C241B] px-4 py-1 rounded-full text-xs font-bold uppercase tracking-widest text-[#2C241B] mb-4">
-            합격을 위한 실전과 분석
+            {t.landing.badge}
           </div>
 
           <h1 className="text-5xl md:text-7xl lg:text-8xl font-serif font-medium tracking-tight text-[#2C241B] leading-none">
-            오답을 이해해야 <span className="italic text-[#C84B31]">합격</span>
-            이
+            {t.landing.heroTitle1} <span className="italic text-[#C84B31]">{t.landing.heroTitle2}</span>
+            {t.landing.heroTitle3}
             <br />
-            보입니다.
+            {t.landing.heroTitle4}
           </h1>
 
           <p className="max-w-xl mx-auto text-lg md:text-xl text-[#5D5548] leading-relaxed break-keep">
-            단순히 정답만 맞추는 건 의미가 없습니다.
+            {t.landing.heroDesc1}
             <br />
-            문장 단위 번역, 상세한 어휘 풀이, 그리고 오답 노트까지.
+            {t.landing.heroDesc2}
             <br />
-            <span className="font-bold text-[#2C241B]">합격</span>으로 가는 가장
-            확실한 길을 제시합니다.
+            <span className="font-bold text-[#2C241B]">{t.landing.heroDesc3}</span>
+            {t.landing.heroDesc4}
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8">
             <button className="w-full sm:w-auto bg-[#C84B31] text-white px-8 py-4 rounded-full text-lg font-medium hover:bg-[#A63620] transition-all flex items-center justify-center gap-2 shadow-xl shadow-[#C84B31]/20">
               <BookOpen className="w-5 h-5" />
-              모의고사 풀러가기
+              {t.landing.goToExam}
             </button>
             <button className="w-full sm:w-auto bg-transparent border border-[#2C241B]/30 text-[#2C241B] px-8 py-4 rounded-full text-lg font-medium hover:bg-[#2C241B] hover:text-white transition-all flex items-center justify-center gap-2">
               <PlayCircle className="w-5 h-5" />
-              해설 기능 미리보기
+              {t.landing.previewExplanation}
             </button>
           </div>
         </div>
@@ -85,14 +96,14 @@ export default function LandingPageSerene() {
       >
         <div className="mb-16 border-b border-[#2C241B]/10 pb-8 text-center md:text-left">
           <h2 className="text-4xl md:text-5xl font-serif text-[#2C241B] mb-4">
-            취약점 정밀 진단
+            {t.landing.featuresTitle}
           </h2>
           <p className="text-[#5D5548] text-lg">
-            문제를 푸는 시간보다,{" "}
+            {t.landing.featuresDesc1}{" "}
             <span className="text-[#C84B31] font-bold">
-              틀린 이유를 파악하는 시간
+              {t.landing.featuresDesc2}
             </span>
-            이 더 중요하니까요.
+            {t.landing.featuresDesc3}
           </p>
         </div>
 
@@ -103,16 +114,14 @@ export default function LandingPageSerene() {
               <Languages className="w-6 h-6" />
             </div>
             <h3 className="text-2xl font-serif text-[#2C241B] mb-3">
-              문장 단위 번역 & 상세 해설
+              {t.landing.feature1Title}
             </h3>
             <p className="text-[#5D5548] leading-relaxed mb-6 break-keep">
-              "이 문장이 왜 이렇게 해석되지?" 더 이상 번역기를 돌리지 마세요.
-              모든 예문과 문제 지문에 대해 문장 단위의 정확한 한국어 번역과 문법
-              포인트를 짚어드립니다.
+              {t.landing.feature1Desc}
             </p>
             <div className="bg-[#EBE7DF]/50 p-4 rounded-xl border border-[#D8D3C8]/50">
               <div className="text-sm text-[#2C241B]/60 mb-1 font-serif">
-                예시
+                {t.landing.feature1Example}
               </div>
               <div className="font-serif text-[#2C241B] mb-1 text-lg">
                 努力した
@@ -135,11 +144,10 @@ export default function LandingPageSerene() {
               <FileText className="w-6 h-6" />
             </div>
             <h3 className="text-2xl font-serif text-[#2C241B] mb-3">
-              자동 어휘 분석
+              {t.landing.feature2Title}
             </h3>
             <p className="text-[#5D5548] leading-relaxed mb-6 break-keep">
-              문제에 나온 모르는 단어, 일일이 사전 찾지 마세요. 해당 문제에
-              포함된 핵심 단어와 요미가나, 뜻을 자동으로 정리해서 보여줍니다.
+              {t.landing.feature2Desc}
             </p>
             <div className="flex flex-wrap gap-2">
               {["雰囲(ふんい)気", "あきらめる", "徹底(てってい)的"].map(
@@ -161,30 +169,28 @@ export default function LandingPageSerene() {
               <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center text-[#C84B31] mb-6 backdrop-blur-sm">
                 <XCircle className="w-6 h-6" />
               </div>
-              <h3 className="text-3xl font-serif mb-4">스마트 오답 노트</h3>
+              <h3 className="text-3xl font-serif mb-4">{t.landing.feature3Title}</h3>
               <p className="text-[#EBE7DF]/70 leading-relaxed mb-6 break-keep">
-                틀린 문제는 자동으로 저장됩니다. 단순히 저장만 하는 것이 아니라,
-                망각 곡선에 맞춰 다시 풀어볼 수 있도록 알림을 보냅니다. 내가
-                약한 문법과 단어 유형만 골라 집중 공략하세요.
+                {t.landing.feature3Desc}
               </p>
               <button className="text-[#C84B31] font-bold hover:text-white transition-colors flex items-center gap-2">
-                오답 노트 기능 더보기 <ArrowRight className="w-4 h-4" />
+                {t.landing.feature3More} <ArrowRight className="w-4 h-4" />
               </button>
             </div>
             {/* Visual Decoration */}
             <div className="relative z-10 grid grid-cols-2 gap-3 opacity-80">
               <div className="bg-white/10 p-4 rounded-xl border border-white/5 backdrop-blur-sm text-center">
-                <div className="text-xs text-[#EBE7DF]/50 mb-1">정답률</div>
+                <div className="text-xs text-[#EBE7DF]/50 mb-1">{t.landing.feature3Accuracy}</div>
                 <div className="text-2xl font-bold text-[#C84B31]">85%</div>
               </div>
               <div className="bg-white/10 p-4 rounded-xl border border-white/5 backdrop-blur-sm text-center">
                 <div className="text-xs text-[#EBE7DF]/50 mb-1">
-                  복습할 문제
+                  {t.landing.feature3Review}
                 </div>
                 <div className="text-2xl font-bold text-white">
                   12
                   <span className="text-sm font-normal text-white/50 ml-1">
-                    개
+                    {t.landing.feature3Count}
                   </span>
                 </div>
               </div>
@@ -202,10 +208,10 @@ export default function LandingPageSerene() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-serif text-[#2C241B] mb-4">
-              이용권 안내
+              {t.landing.pricingTitle}
             </h2>
             <p className="text-[#5D5548]">
-              합리적인 가격으로 합격의 지름길을 선택하세요.
+              {t.landing.pricingDesc}
             </p>
           </div>
 
@@ -214,68 +220,64 @@ export default function LandingPageSerene() {
             <div className="bg-[#EBE7DF] rounded-3xl p-8 border border-[#D8D3C8] flex flex-col relative overflow-hidden">
               <div className="mb-4">
                 <span className="text-sm font-bold text-[#5D5548] uppercase tracking-wider">
-                  Basic
+                  {t.landing.basicPlan}
                 </span>
                 <div className="mt-2 flex items-baseline gap-1">
                   <span className="text-4xl font-serif text-[#2C241B]">
-                    무료
+                    {t.common.free}
                   </span>
                 </div>
                 <p className="text-[#5D5548] mt-2 text-sm">
-                  가볍게 실력을 점검하고 싶은 분들을 위해
+                  {t.landing.basicDesc}
                 </p>
               </div>
               <ul className="space-y-4 mb-8 flex-1">
                 <li className="flex items-center gap-3 text-[#2C241B]">
-                  <Check className="w-5 h-5 text-[#5D5548]" /> 매일 1회 미니
-                  모의고사
+                  <Check className="w-5 h-5 text-[#5D5548]" /> {t.landing.basicFeature1}
                 </li>
                 <li className="flex items-center gap-3 text-[#2C241B]">
-                  <Check className="w-5 h-5 text-[#5D5548]" /> 기본 정답 확인
+                  <Check className="w-5 h-5 text-[#5D5548]" /> {t.landing.basicFeature2}
                 </li>
                 <li className="flex items-center gap-3 text-[#2C241B]">
-                  <Check className="w-5 h-5 text-[#5D5548]" /> 커뮤니티 접근
-                  권한
+                  <Check className="w-5 h-5 text-[#5D5548]" /> {t.landing.basicFeature3}
                 </li>
               </ul>
               <button className="w-full py-4 rounded-xl border border-[#2C241B]/20 text-[#2C241B] font-bold hover:bg-[#2C241B] hover:text-white transition-colors">
-                무료로 시작하기
+                {t.landing.startFree}
               </button>
             </div>
 
             {/* Pro Plan */}
             <div className="bg-[#2C241B] rounded-3xl p-8 border border-[#2C241B] flex flex-col relative text-[#EBE7DF] shadow-2xl scale-105 z-10">
               <div className="absolute top-0 right-0 bg-[#C84B31] text-white text-xs font-bold px-3 py-1 rounded-bl-xl">
-                추천
+                {t.common.recommended}
               </div>
               <div className="mb-4">
                 <span className="text-sm font-bold text-[#C84B31] uppercase tracking-wider">
-                  Pro
+                  {t.landing.proPlan}
                 </span>
                 <div className="mt-2 flex items-baseline gap-1">
-                  <span className="text-4xl font-serif text-white">₩9,900</span>
-                  <span className="text-sm text-white/50">/ 월</span>
+                  <span className="text-4xl font-serif text-white">$9</span>
+                  <span className="text-sm text-white/50">{t.common.perMonth}</span>
                 </div>
                 <p className="text-[#EBE7DF]/60 mt-2 text-sm">
-                  확실한 합격을 위한 모든 기능
+                  {t.landing.proDesc}
                 </p>
               </div>
               <ul className="space-y-4 mb-8 flex-1">
                 <li className="flex items-center gap-3">
                   <Check className="w-5 h-5 text-[#C84B31]" />{" "}
-                  <strong>무제한</strong> 데일리 문제
+                  <strong>{t.landing.proFeature1}</strong>{t.landing.proFeature1Desc}
                 </li>
                 <li className="flex items-center gap-3">
                   <Check className="w-5 h-5 text-[#C84B31]" />{" "}
-                  <strong>무제한</strong> 실전 모의고사
+                  <strong>{t.landing.proFeature2}</strong>{t.landing.proFeature2Desc}
                 </li>
                 <li className="flex items-center gap-3">
-                  <Check className="w-5 h-5 text-[#C84B31]" /> 문장별 상세 번역
-                  & 해설
+                  <Check className="w-5 h-5 text-[#C84B31]" /> {t.landing.proFeature3}
                 </li>
                 <li className="flex items-center gap-3">
-                  <Check className="w-5 h-5 text-[#C84B31]" /> 스마트 오답 노트
-                  무제한 저장
+                  <Check className="w-5 h-5 text-[#C84B31]" /> {t.landing.proFeature4}
                 </li>
               </ul>
 
@@ -292,21 +294,21 @@ export default function LandingPageSerene() {
             {/* 텍스트 영역 */}
             <div className="flex-1 space-y-8 order-2 lg:order-1">
               <h2 className="text-4xl md:text-5xl font-serif text-[#2C241B] leading-tight">
-                언제 어디서나,
+                {t.landing.appTitle1}
                 <br />
-                <span className="text-[#C84B31]">당신의 리듬</span>대로.
+                <span className="text-[#C84B31]">{t.landing.appTitle2}</span>{t.landing.appTitle3}
               </h2>
               <p className="text-lg text-[#5D5548] leading-relaxed break-keep">
-                웹에서 푼 모의고사 결과가 앱과 실시간 연동됩니다.
+                {t.landing.appDesc1}
                 <br />
-                출퇴근길 지하철에서 오답 노트를 복습하세요.
+                {t.landing.appDesc2}
               </p>
 
               <ul className="space-y-4">
                 {[
-                  "실시간 학습 진도 동기화",
-                  "오프라인 모드 지원 (데이터 걱정 없이)",
-                  "푸시 알림으로 복습 주기 관리",
+                  t.landing.appFeature1,
+                  t.landing.appFeature2,
+                  t.landing.appFeature3,
                 ].map((item, i) => (
                   <li
                     key={i}
@@ -351,7 +353,7 @@ export default function LandingPageSerene() {
                     {/* 앱 화면 목업 (앱 내부 텍스트 수정) */}
                     <div className="bg-[#2C241B] text-white p-6 pb-10">
                       <div className="text-xs opacity-50 mb-1">REVIEW NOTE</div>
-                      <div className="text-2xl font-serif">취약점 분석</div>
+                      <div className="text-2xl font-serif">{t.landing.mockupReview}</div>
                     </div>
                     <div className="p-6">
                       <div className="w-full h-32 bg-[#EBE7DF] rounded-2xl mb-4 flex items-center justify-center text-[#5D5548] font-serif text-sm">
@@ -359,15 +361,15 @@ export default function LandingPageSerene() {
                       </div>
                       <div className="space-y-3">
                         <div className="w-full h-12 bg-white border border-[#EBE7DF] rounded-xl flex items-center px-4 text-xs text-[#2C241B] justify-between">
-                          <span>정답 (正解)</span>
+                          <span>{t.landing.mockupCorrect}</span>
                           <span className="font-bold">A</span>
                         </div>
                         <div className="w-full h-12 bg-[#C84B31]/10 border border-[#C84B31] rounded-xl flex items-center px-4 text-xs text-[#C84B31] justify-between">
-                          <span>나의 답안</span>
+                          <span>{t.landing.mockupMyAnswer}</span>
                           <span className="font-bold">B</span>
                         </div>
                         <div className="w-full h-12 bg-white border border-[#EBE7DF] rounded-xl flex items-center px-4 text-xs text-[#5D5548]">
-                          해설 보기...
+                          {t.landing.mockupViewExplanation}
                         </div>
                       </div>
                     </div>

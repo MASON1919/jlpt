@@ -15,30 +15,57 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
+    // 활성 구독 찾기
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
-      select: { id: true, subscriptionId: true },
+      include: {
+        subscriptions: {
+          where: {
+            status: "ACTIVE",
+            provider: "LEMON_SQUEEZY",
+          },
+          orderBy: { createdAt: "desc" },
+          take: 1,
+        },
+      },
     });
 
-    if (!user || !user.subscriptionId) {
+    if (!user || user.subscriptions.length === 0) {
       return NextResponse.json(
         { error: "구독 정보가 없습니다." },
         { status: 400 }
       );
     }
 
+    const activeSubscription = user.subscriptions[0];
+
     // Call Lemon Squeezy API
-    const response = await cancelSubscription(user.subscriptionId);
+    const response = await cancelSubscription(activeSubscription.externalId);
 
     if (response.error) {
-        console.error("Lemon Squeezy Cancel Error:", response.error);
-        return NextResponse.json({ error: response.error.message }, { status: 500 });
+      console.error("Lemon Squeezy Cancel Error:", response.error);
+      return NextResponse.json({ error: response.error.message }, { status: 500 });
     }
 
     // Optimistically update local DB (Webhook will confirm later)
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { subscriptionStatus: "cancelled" },
+    const previousStatus = activeSubscription.status;
+    
+    await prisma.subscription.update({
+      where: { id: activeSubscription.id },
+      data: {
+        status: "CANCELLED",
+        cancelledAt: new Date(),
+      },
+    });
+
+    // 히스토리 기록
+    await prisma.subscriptionHistory.create({
+      data: {
+        subscriptionId: activeSubscription.id,
+        event: "CANCELLED",
+        previousStatus,
+        newStatus: "CANCELLED",
+      },
     });
 
     return NextResponse.json({ data: response.data });

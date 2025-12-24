@@ -10,14 +10,15 @@ import {
   Lock,
   Trophy,
   AlertCircle,
-  CheckCircle2,
 } from "lucide-react";
+import { useLanguage } from "@/lib/i18n";
 
 const MOCK_EXAMS = [
   {
     id: 1,
     level: "1",
     title: "2024년 1회 실전 모의고사",
+    titleEn: "2024 Session 1 Mock Exam",
     year: "2024",
     time: 170,
     status: "new",
@@ -27,6 +28,7 @@ const MOCK_EXAMS = [
     id: 2,
     level: "1",
     title: "2023년 2회 기출 변형",
+    titleEn: "2023 Session 2 Modified",
     year: "2023",
     time: 170,
     status: "completed",
@@ -36,6 +38,7 @@ const MOCK_EXAMS = [
     id: 3,
     level: "1",
     title: "2023년 1회 기출 변형",
+    titleEn: "2023 Session 1 Modified",
     year: "2023",
     time: 170,
     status: "locked",
@@ -45,6 +48,7 @@ const MOCK_EXAMS = [
     id: 4,
     level: "2",
     title: "2024년 대비 N2 하프 모의고사",
+    titleEn: "2024 N2 Half Mock Exam",
     year: "2024",
     time: 105,
     status: "new",
@@ -62,6 +66,7 @@ const LEVELS = [
 
 export default function ExamPage() {
   const [currentLevel, setCurrentLevel] = useState("1");
+  const { t, language } = useLanguage();
 
   // 선택된 레벨의 시험지만 필터링
   const filteredExams = MOCK_EXAMS.filter(
@@ -79,12 +84,12 @@ export default function ExamPage() {
               <span>Real Simulation</span>
             </div>
             <h1 className="text-4xl md:text-5xl font-serif text-[#2C241B]">
-              실전 모의고사
+              {t.exam.title}
             </h1>
             <p className="text-[#5D5548] text-lg max-w-xl">
-              실제 시험과 동일한 시간 제한과 환경.
+              {t.exam.desc1}
               <br className="hidden sm:block" />
-              당신의 합격 가능성을 가장 정확하게 예측합니다.
+              {t.exam.desc2}
             </p>
           </div>
 
@@ -114,11 +119,11 @@ export default function ExamPage() {
           <AlertCircle className="w-6 h-6 text-[#C84B31] flex-shrink-0 mt-1" />
           <div className="text-sm text-[#2C241B]">
             <strong className="block text-base font-bold text-[#C84B31] mb-1">
-              시험 시작 전 확인해주세요
+              {t.exam.warningTitle}
             </strong>
-            모의고사는 중간에 멈출 수 없으며, 실제 시험처럼{" "}
-            <strong>언어지식, 독해, 청해</strong>가 연속으로 진행됩니다. 충분한
-            시간이 확보되었을 때 시작하는 것을 권장합니다.
+            {t.exam.warningDesc}{" "}
+            <strong>{t.exam.warningSubjects}</strong>
+            {t.exam.warningEnd}
           </div>
         </div>
 
@@ -150,25 +155,25 @@ export default function ExamPage() {
                           : "bg-red-100 text-red-700"
                       }`}
                     >
-                      {exam.score?.passed ? "합격 (Passed)" : "불합격 (Failed)"}
+                      {exam.score?.passed ? t.exam.passed : t.exam.failed}
                     </span>
                   )}
                 </div>
 
                 {/* 타이틀 */}
                 <h3 className="text-2xl font-serif text-[#2C241B] mb-2 group-hover:text-[#C84B31] transition-colors">
-                  {exam.title}
+                  {language === "ko" ? exam.title : exam.titleEn}
                 </h3>
 
                 {/* 메타 정보 */}
                 <div className="flex items-center gap-4 text-sm text-[#5D5548] mb-8">
                   <div className="flex items-center gap-1.5">
                     <Clock className="w-4 h-4" />
-                    {exam.time}분
+                    {exam.time}min
                   </div>
                   <div className="flex items-center gap-1.5">
                     <FileText className="w-4 h-4" />
-                    전체 과목
+                    {t.exam.allSubjects}
                   </div>
                 </div>
 
@@ -180,11 +185,11 @@ export default function ExamPage() {
                       <div className="flex items-center gap-2 text-[#5D5548]">
                         <Lock className="w-5 h-5" />
                         <span className="text-sm font-medium">
-                          Pro 멤버십 전용
+                          {t.exam.proOnly}
                         </span>
                       </div>
                       <button className="text-xs bg-[#2C241B] text-white px-4 py-2 rounded-full hover:bg-[#C84B31] transition-colors">
-                        Upgrade
+                        {t.common.upgrade}
                       </button>
                     </>
                   ) : exam.status === "completed" ? (
@@ -203,14 +208,14 @@ export default function ExamPage() {
                         href={`/exam/result/${exam.id}`}
                         className="flex items-center gap-2 text-[#C84B31] font-bold text-sm hover:underline"
                       >
-                        결과 분석 보기 <ChevronRight className="w-4 h-4" />
+                        {t.common.viewResult} <ChevronRight className="w-4 h-4" />
                       </Link>
                     </>
                   ) : (
                     // ▶️ 응시 가능 상태
                     <Link href={`/exam/start/${exam.id}`} className="w-full">
                       <button className="w-full bg-[#2C241B] text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-[#C84B31] transition-colors shadow-lg">
-                        시험 시작하기
+                        {t.exam.startExam}
                         <ChevronRight className="w-5 h-5" />
                       </button>
                     </Link>
@@ -223,7 +228,7 @@ export default function ExamPage() {
             <div className="col-span-1 md:col-span-2 py-20 text-center border-2 border-dashed border-[#D8D3C8] rounded-3xl">
               <Trophy className="w-12 h-12 text-[#D8D3C8] mx-auto mb-4" />
               <p className="text-[#5D5548] font-medium">
-                해당 급수의 모의고사가 준비 중입니다.
+                {t.exam.noExamsAvailable}
               </p>
             </div>
           )}

@@ -4,11 +4,12 @@ import React from "react";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { ArrowLeft } from "lucide-react";
+import { useLanguage } from "@/lib/i18n";
 
 export default function LoginPage() {
+  const { t } = useLanguage();
+
   const handleGoogleLogin = () => {
-    // google provider ID로 로그인 요청
-    // callbackUrl은 로그인 성공 후 이동할 페이지 (보통 메인이나 대시보드)
     signIn("google", { callbackUrl: "/" });
   };
 
@@ -45,12 +46,12 @@ export default function LoginPage() {
         {/* 환영 문구 & 명언 */}
         <div className="space-y-2 mb-10">
           <h2 className="text-xl font-bold text-[#2C241B]">
-            학습을 시작할 준비가 되셨나요?
+            {t.login.ready}
           </h2>
           <p className="text-[#5D5548] text-sm font-medium font-serif italic">
-            "천리길도 한 걸음부터"
+            {t.login.quote}
           </p>
-          <p className="text-[#5D5548]/60 text-xs">千里の道も一歩から</p>
+          <p className="text-[#5D5548]/60 text-xs">{t.login.quoteJp}</p>
         </div>
 
         {/* 구글 로그인 버튼 */}
@@ -78,21 +79,21 @@ export default function LoginPage() {
             />
           </svg>
           <span className="font-medium group-hover:text-[#C84B31] transition-colors">
-            Google 계정으로 계속하기
+            {t.login.continueWithGoogle}
           </span>
         </button>
 
         {/* 하단 링크 */}
         <div className="mt-8 text-xs text-[#5D5548]/60">
-          로그인 시
+          {t.login.termsIntro}
           <Link href="#" className="underline hover:text-[#C84B31] mx-1">
-            이용약관
+            {t.login.terms}
           </Link>
-          및
+          {t.login.and}
           <Link href="#" className="underline hover:text-[#C84B31] mx-1">
-            개인정보처리방침
+            {t.login.privacy}
           </Link>
-          에 동의하게 됩니다.
+          {t.login.termsAgree}
         </div>
       </div>
     </div>

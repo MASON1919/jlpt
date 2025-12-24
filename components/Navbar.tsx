@@ -4,15 +4,18 @@ import Link from "next/link";
 import Image from "next/image";
 import { useSession, signOut } from "next-auth/react";
 import { usePathname } from "next/navigation";
-import { User, BookOpen, PenTool } from "lucide-react"; // 아이콘 추가
+import { User, BookOpen, PenTool, BarChart3 } from "lucide-react";
+import { useLanguage } from "@/lib/i18n";
 
 export function Navbar() {
   const { data: session, status } = useSession();
   const pathname = usePathname();
+  const { t } = useLanguage();
 
   if (pathname?.startsWith("/practice/solve")) return null;
   else if (pathname?.startsWith("/payment")) return null;
   else if(pathname?.startsWith("/mypage")) return null;
+  else if(pathname?.startsWith("/stats")) return null;
 
   return (
     <nav className="fixed top-6 left-1/2 -translate-x-1/2 w-[95%] max-w-6xl z-50">
@@ -32,7 +35,7 @@ export function Navbar() {
             className="flex items-center gap-1.5 px-4 py-2 rounded-full hover:bg-[#EBE7DF] hover:text-[#C84B31] transition-all"
           >
             <BookOpen className="w-4 h-4" />
-            <span>데일리 연습</span>
+            <span>{t.navbar.dailyPractice}</span>
           </Link>
 
           <Link
@@ -40,7 +43,7 @@ export function Navbar() {
             className="flex items-center gap-1.5 px-4 py-2 rounded-full hover:bg-[#EBE7DF] hover:text-[#C84B31] transition-all"
           >
             <PenTool className="w-4 h-4" />
-            <span>모의고사</span>
+            <span>{t.navbar.mockExam}</span>
           </Link>
 
           {/* 구분선 */}
@@ -50,13 +53,13 @@ export function Navbar() {
             href="/#features"
             className="px-3 py-2 hover:text-[#C84B31] transition-colors"
           >
-            기능
+            {t.navbar.features}
           </Link>
           <Link
             href="/#pricing"
             className="px-3 py-2 hover:text-[#C84B31] transition-colors"
           >
-            요금제
+            {t.navbar.pricing}
           </Link>
         </div>
 
@@ -84,9 +87,16 @@ export function Navbar() {
                   {session.user?.name}
                 </span>
                 <Link 
+                  href="/stats" 
+                  className="bg-[#C84B31]/10 p-1.5 rounded-full hover:bg-[#C84B31]/20 transition-colors"
+                  title={t.navbar.stats || "Statistics"}
+                >
+                  <BarChart3 className="w-4 h-4 text-[#C84B31]" />
+                </Link>
+                <Link 
                   href="/mypage" 
                   className="bg-gray-100 p-1.5 rounded-full hover:bg-gray-200 transition-colors"
-                  title="마이 페이지"
+                  title={t.navbar.myPage}
                 >
                   <User className="w-4 h-4 text-gray-600" />
                 </Link>
@@ -95,7 +105,7 @@ export function Navbar() {
                 onClick={() => signOut({ callbackUrl: "/" })}
                 className="text-xs font-medium text-[#5D5548] hover:text-[#C84B31] transition-colors border-l border-[#D8D3C8] pl-3 ml-1"
               >
-                로그아웃
+                {t.common.logout}
               </button>
             </div>
           ) : (
@@ -103,7 +113,7 @@ export function Navbar() {
               href="/login"
               className="bg-[#2C241B] text-[#FDFBF7] px-5 py-2 rounded-full text-sm font-medium hover:bg-[#C84B31] transition-colors whitespace-nowrap"
             >
-              Get Started
+              {t.common.getStarted}
             </Link>
           )}
         </div>
@@ -111,3 +121,4 @@ export function Navbar() {
     </nav>
   );
 }
+

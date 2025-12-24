@@ -10,53 +10,52 @@ import {
   ArrowRight,
   Sparkles,
 } from "lucide-react";
-
-// 선택 옵션 데이터 정의
-const LEVELS = [
-  { id: "1", label: "N1", desc: "고급" },
-  { id: "2", label: "N2", desc: "상급" },
-  { id: "3", label: "N3", desc: "중급" },
-  { id: "4", label: "N4", desc: "기초" },
-  { id: "5", label: "N5", desc: "입문" },
-];
-
-const TYPES = [
-  {
-    id: "vocab",
-    label: "문자 어휘",
-    icon: <Languages className="w-5 h-5" />,
-    desc: "한자 읽기, 표기, 문맥 규정",
-  },
-  {
-    id: "grammar",
-    label: "문법",
-    icon: <BookOpen className="w-5 h-5" />,
-    desc: "문법 형식, 문장 만들기",
-  },
-  {
-    id: "reading",
-    label: "독해",
-    icon: <Glasses className="w-5 h-5" />,
-    desc: "단문, 중문, 장문 독해",
-  },
-  {
-    id: "listening",
-    label: "청해",
-    icon: <Ear className="w-5 h-5" />,
-    desc: "과제 이해, 포인트 이해",
-  },
-];
+import { useLanguage } from "@/lib/i18n";
 
 export default function PracticePage() {
   const router = useRouter();
+  const { t } = useLanguage();
   const [selectedLevel, setSelectedLevel] = useState<string | null>(null);
   const [selectedType, setSelectedType] = useState<string | null>(null);
 
+  // 선택 옵션 데이터 정의
+  const LEVELS = [
+    { id: "1", label: "N1", desc: t.practice.level1 },
+    { id: "2", label: "N2", desc: t.practice.level2 },
+    { id: "3", label: "N3", desc: t.practice.level3 },
+    { id: "4", label: "N4", desc: t.practice.level4 },
+    { id: "5", label: "N5", desc: t.practice.level5 },
+  ];
+
+  const TYPES = [
+    {
+      id: "vocab",
+      label: t.practice.typeVocab,
+      icon: <Languages className="w-5 h-5" />,
+      desc: t.practice.typeVocabDesc,
+    },
+    {
+      id: "grammar",
+      label: t.practice.typeGrammar,
+      icon: <BookOpen className="w-5 h-5" />,
+      desc: t.practice.typeGrammarDesc,
+    },
+    {
+      id: "reading",
+      label: t.practice.typeReading,
+      icon: <Glasses className="w-5 h-5" />,
+      desc: t.practice.typeReadingDesc,
+    },
+    {
+      id: "listening",
+      label: t.practice.typeListening,
+      icon: <Ear className="w-5 h-5" />,
+      desc: t.practice.typeListeningDesc,
+    },
+  ];
+
   const handleStart = () => {
     if (!selectedLevel || !selectedType) return;
-
-    // 선택된 값을 쿼리 파라미터로 넘기며 문제 풀이 페이지로 이동
-    // (이후 구현할 페이지 경로: /practice/solve)
     router.push(`/practice/solve?level=${selectedLevel}&type=${selectedType}`);
   };
 
@@ -70,11 +69,11 @@ export default function PracticePage() {
             <span>Daily Practice</span>
           </div>
           <h1 className="text-4xl md:text-5xl font-serif text-[#2C241B]">
-            오늘의 학습을 설정하세요
+            {t.practice.title}
           </h1>
           <p className="text-[#5D5548] text-lg">
-            하루 한 문제라도 꾸준히. <br className="sm:hidden" />
-            작은 성취가 모여 합격을 만듭니다.
+            {t.practice.desc1} <br className="sm:hidden" />
+            {t.practice.desc2}
           </p>
         </div>
 
@@ -90,7 +89,7 @@ export default function PracticePage() {
                 <span className="w-6 h-6 rounded-full bg-[#2C241B] text-white flex items-center justify-center text-xs font-bold">
                   1
                 </span>
-                도전할 급수 (Level)
+                {t.practice.step1}
               </h2>
               <div className="grid grid-cols-5 gap-3 sm:gap-4">
                 {LEVELS.map((level) => (
@@ -131,7 +130,7 @@ export default function PracticePage() {
                 <span className="w-6 h-6 rounded-full bg-[#2C241B] text-white flex items-center justify-center text-xs font-bold">
                   2
                 </span>
-                학습 유형 (Subject)
+                {t.practice.step2}
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {TYPES.map((type) => (
@@ -193,10 +192,10 @@ export default function PracticePage() {
                 `}
               >
                 {!selectedLevel || !selectedType ? (
-                  "옵션을 선택해주세요"
+                  t.practice.selectOptions
                 ) : (
                   <>
-                    학습 시작하기 <ArrowRight className="w-5 h-5" />
+                    {t.practice.startLearning} <ArrowRight className="w-5 h-5" />
                   </>
                 )}
               </button>
@@ -206,8 +205,7 @@ export default function PracticePage() {
 
         {/* 하단 팁 */}
         <p className="text-center text-[#5D5548]/60 text-sm mt-8">
-          Tip: 모의고사(Mock Exam)는 시간을 재면서 전체 영역을 응시하는
-          모드입니다.
+          {t.practice.tip}
         </p>
       </div>
     </div>

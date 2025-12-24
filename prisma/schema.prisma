@@ -7,11 +7,76 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ============================================
+// ENUMS
+// ============================================
+
 enum SubscriptionProvider {
   LEMON_SQUEEZY
   APPLE   // App Store
   GOOGLE  // Play Store
 }
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELLED
+  EXPIRED
+  PAST_DUE
+  PAUSED
+}
+
+enum SubscriptionEvent {
+  CREATED
+  RENEWED
+  CANCELLED
+  EXPIRED
+  PLAN_CHANGED
+  PAYMENT_FAILED
+  REACTIVATED
+}
+
+enum Language {
+  KO
+  EN
+  JP
+  CN
+  VN
+}
+
+enum ProblemType {
+  VOCAB
+  GRAMMAR
+  READING
+  LISTENING
+}
+
+enum ProblemSubType {
+  KANJI_READING
+  ORTHOGRAPHY
+  WORD_FORMATION
+  CONTEXT
+  PARAPHRASE
+  USAGE
+  GRAMMAR_FORM
+  GRAMMAR_ORDER
+  TEXT_GRAMMAR
+  SHORT_PASSAGE
+  MID_PASSAGE
+  LONG_PASSAGE
+  INTEGRATED_PASSAGE
+  THEMATIC_PASSAGE
+  INFO_RETRIEVAL
+  TASK_BASED
+  POINT_COMPREHENSION
+  SUMMARY
+  QUICK_RESPONSE
+  INTEGRATED_COMPREHENSION
+}
+
+// ============================================
+// USER & AUTH
+// ============================================
+
 model User {
   id           String         @id @default(cuid())
   email        String         @unique
@@ -21,28 +86,79 @@ model User {
   targetLevel  Int            @default(1)
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
-  reviewNotes  ReviewNote[]
-  solveHistory SolveHistory[]
-  // [구독 관리 필드]
-  isPro               Boolean   @default(false)
   
-  // ★ 핵심: 어디서 결제했는지 기록
-  subscriptionProvider SubscriptionProvider? 
+  // Relations
+  reviewNotes   ReviewNote[]
+  solveHistory  SolveHistory[]
+  subscriptions Subscription[]
   
-  // 각 플랫폼의 "구독 고유 ID" (레몬스퀴지는 sub_id, 애플은 original_transaction_id 등)
-  subscriptionId      String?
-  
-  // 상태 (active, cancelled, expired 등)
-  subscriptionStatus  String?
-  
-  // 만료일
-  currentPeriodEnd    DateTime?
-  
-  // 모바일 영수증 검증용 토큰 (애플/구글은 서버 검증 시 이게 필요함)
-  purchaseToken       String?   @db.Text
-
-  customerPortalUrl    String?
+  // Quick access flag (computed from active subscriptions)
+  isPro         Boolean        @default(false)
 }
+
+// ============================================
+// SUBSCRIPTION SYSTEM
+// ============================================
+
+model Plan {
+  id            String   @id @default(cuid())
+  name          String   // "Pro Monthly", "Pro Yearly"
+  code          String   @unique // "pro_monthly", "pro_yearly"
+  price         Int      // 9900 (in smallest currency unit)
+  currency      String   @default("KRW")
+  interval      String   // "month", "year"
+  intervalCount Int      @default(1)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  
+  subscriptions Subscription[]
+}
+
+model Subscription {
+  id                   String               @id @default(cuid())
+  userId               String
+  user                 User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  planId               String?
+  plan                 Plan?                @relation(fields: [planId], references: [id])
+  
+  provider             SubscriptionProvider
+  externalId           String               // Lemon Squeezy sub ID, Apple txn ID
+  status               SubscriptionStatus   @default(ACTIVE)
+  
+  currentPeriodStart   DateTime
+  currentPeriodEnd     DateTime
+  cancelledAt          DateTime?
+  
+  purchaseToken        String?              @db.Text // Mobile receipt
+  customerPortalUrl    String?
+  
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+  
+  history              SubscriptionHistory[]
+  
+  @@index([userId])
+  @@index([externalId])
+}
+
+model SubscriptionHistory {
+  id             String              @id @default(cuid())
+  subscriptionId String
+  subscription   Subscription        @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  
+  event          SubscriptionEvent
+  previousStatus SubscriptionStatus?
+  newStatus      SubscriptionStatus?
+  metadata       Json?               // Extra event data
+  
+  createdAt      DateTime            @default(now())
+  
+  @@index([subscriptionId])
+}
+
+// ============================================
+// PROBLEM & LEARNING SYSTEM
+// ============================================
 
 model Problem {
   id                  Int            @id @default(autoincrement())
@@ -103,42 +219,4 @@ model Grammar {
   examples          Json?
   explanation       Json?
   hurigana          String?
-}
-
-enum Language {
-  KO
-  EN
-  JP
-  CN
-  VN
-}
-
-enum ProblemType {
-  VOCAB
-  GRAMMAR
-  READING
-  LISTENING
-}
-
-enum ProblemSubType {
-  KANJI_READING
-  ORTHOGRAPHY
-  WORD_FORMATION
-  CONTEXT
-  PARAPHRASE
-  USAGE
-  GRAMMAR_FORM
-  GRAMMAR_ORDER
-  TEXT_GRAMMAR
-  SHORT_PASSAGE
-  MID_PASSAGE
-  LONG_PASSAGE
-  INTEGRATED_PASSAGE
-  THEMATIC_PASSAGE
-  INFO_RETRIEVAL
-  TASK_BASED
-  POINT_COMPREHENSION
-  SUMMARY
-  QUICK_RESPONSE
-  INTEGRATED_COMPREHENSION
 }
