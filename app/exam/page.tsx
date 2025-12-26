@@ -1,77 +1,58 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   PenTool,
   Clock,
   FileText,
   ChevronRight,
-  Lock,
   Trophy,
   AlertCircle,
+  Loader2,
 } from "lucide-react";
 import { useLanguage } from "@/lib/i18n";
 
-const MOCK_EXAMS = [
-  {
-    id: 1,
-    level: "1",
-    title: "2024년 1회 실전 모의고사",
-    titleEn: "2024 Session 1 Mock Exam",
-    year: "2024",
-    time: 170,
-    status: "new",
-    score: null,
-  },
-  {
-    id: 2,
-    level: "1",
-    title: "2023년 2회 기출 변형",
-    titleEn: "2023 Session 2 Modified",
-    year: "2023",
-    time: 170,
-    status: "completed",
-    score: { total: 145, max: 180, passed: true },
-  },
-  {
-    id: 3,
-    level: "1",
-    title: "2023년 1회 기출 변형",
-    titleEn: "2023 Session 1 Modified",
-    year: "2023",
-    time: 170,
-    status: "locked",
-    score: null,
-  },
-  {
-    id: 4,
-    level: "2",
-    title: "2024년 대비 N2 하프 모의고사",
-    titleEn: "2024 N2 Half Mock Exam",
-    year: "2024",
-    time: 105,
-    status: "new",
-    score: null,
-  },
-];
+interface MockExam {
+  id: number;
+  level: number;
+  title: string;
+  createdAt: string;
+  _count: { problems: number };
+}
 
 const LEVELS = [
-  { id: "1", label: "N1" },
-  { id: "2", label: "N2" },
-  { id: "3", label: "N3" },
-  { id: "4", label: "N4" },
-  { id: "5", label: "N5" },
+  { id: 1, label: "N1" },
+  { id: 2, label: "N2" },
+  { id: 3, label: "N3" },
+  { id: 4, label: "N4" },
+  { id: 5, label: "N5" },
 ];
 
 export default function ExamPage() {
-  const [currentLevel, setCurrentLevel] = useState("1");
+  const [currentLevel, setCurrentLevel] = useState(1);
+  const [mockExams, setMockExams] = useState<MockExam[]>([]);
+  const [loading, setLoading] = useState(true);
   const { t, language } = useLanguage();
 
-  // 선택된 레벨의 시험지만 필터링
-  const filteredExams = MOCK_EXAMS.filter(
-    (exam) => exam.level === currentLevel
-  );
+  useEffect(() => {
+    const fetchExams = async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(`/api/mockexams?level=${currentLevel}`);
+        if (res.ok) {
+          const data = await res.json();
+          setMockExams(data.mockExams);
+        }
+      } catch (error) {
+        console.error("Failed to fetch mock exams:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchExams();
+  }, [currentLevel]);
 
   return (
     <div className="min-h-screen bg-[#EBE7DF] pt-32 pb-20 px-4">
@@ -93,7 +74,7 @@ export default function ExamPage() {
             </p>
           </div>
 
-          {/* 급수 선택 탭 (Practice와 다르게 심플한 탭 형태) */}
+          {/* 급수 선택 탭 */}
           <div className="bg-[#FDFBF7] p-1.5 rounded-xl border border-[#D8D3C8] inline-flex shadow-sm">
             {LEVELS.map((level) => (
               <button
@@ -129,47 +110,36 @@ export default function ExamPage() {
 
         {/* 3. 시험지 리스트 (Grid) */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {filteredExams.length > 0 ? (
-            filteredExams.map((exam) => (
+          {loading ? (
+            <div className="col-span-1 md:col-span-2 py-20 flex items-center justify-center">
+              <Loader2 className="w-10 h-10 text-[#C84B31] animate-spin" />
+            </div>
+          ) : mockExams.length > 0 ? (
+            mockExams.map((exam) => (
               <div
                 key={exam.id}
-                className={`
-                  group relative bg-[#FDFBF7] rounded-3xl p-8 border transition-all duration-300
-                  ${
-                    exam.status === "locked"
-                      ? "border-[#D8D3C8] opacity-80"
-                      : "border-[#D8D3C8] hover:border-[#C84B31] hover:shadow-xl hover:shadow-[#C84B31]/10"
-                  }
-                `}
+                className="group relative bg-[#FDFBF7] rounded-3xl p-8 border transition-all duration-300 border-[#D8D3C8] hover:border-[#C84B31] hover:shadow-xl hover:shadow-[#C84B31]/10"
               >
-                {/* 상단 뱃지 (년도) */}
+                {/* 상단 뱃지 */}
                 <div className="flex justify-between items-start mb-6">
-                  <span className="bg-[#EBE7DF] text-[#5D5548] px-3 py-1 rounded-lg text-xs font-bold font-serif">
-                    {exam.year} Season
+                  <span className="bg-[#C84B31] text-white px-3 py-1 rounded-lg text-xs font-bold">
+                    N{exam.level}
                   </span>
-                  {exam.status === "completed" && (
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 ${
-                        exam.score?.passed
-                          ? "bg-green-100 text-green-700"
-                          : "bg-red-100 text-red-700"
-                      }`}
-                    >
-                      {exam.score?.passed ? t.exam.passed : t.exam.failed}
-                    </span>
-                  )}
+                  <span className="text-xs text-[#5D5548]">
+                    {exam._count.problems}{language === "ko" ? "문제" : " problems"}
+                  </span>
                 </div>
 
                 {/* 타이틀 */}
                 <h3 className="text-2xl font-serif text-[#2C241B] mb-2 group-hover:text-[#C84B31] transition-colors">
-                  {language === "ko" ? exam.title : exam.titleEn}
+                  {exam.title}
                 </h3>
 
                 {/* 메타 정보 */}
                 <div className="flex items-center gap-4 text-sm text-[#5D5548] mb-8">
                   <div className="flex items-center gap-1.5">
                     <Clock className="w-4 h-4" />
-                    {exam.time}min
+                    {exam._count.problems * 2}min
                   </div>
                   <div className="flex items-center gap-1.5">
                     <FileText className="w-4 h-4" />
@@ -177,49 +147,14 @@ export default function ExamPage() {
                   </div>
                 </div>
 
-                {/* 하단 액션 버튼 분기 */}
-                <div className="border-t border-[#D8D3C8] pt-6 flex items-center justify-between">
-                  {exam.status === "locked" ? (
-                    // 🔒 잠김 상태
-                    <>
-                      <div className="flex items-center gap-2 text-[#5D5548]">
-                        <Lock className="w-5 h-5" />
-                        <span className="text-sm font-medium">
-                          {t.exam.proOnly}
-                        </span>
-                      </div>
-                      <button className="text-xs bg-[#2C241B] text-white px-4 py-2 rounded-full hover:bg-[#C84B31] transition-colors">
-                        {t.common.upgrade}
-                      </button>
-                    </>
-                  ) : exam.status === "completed" ? (
-                    // 🏆 완료 상태 (점수 표시)
-                    <>
-                      <div className="flex flex-col">
-                        <span className="text-xs text-[#5D5548]">Score</span>
-                        <span className="text-xl font-bold font-serif text-[#2C241B]">
-                          {exam.score?.total}{" "}
-                          <span className="text-sm text-[#5D5548] font-normal">
-                            / {exam.score?.max}
-                          </span>
-                        </span>
-                      </div>
-                      <Link
-                        href={`/exam/result/${exam.id}`}
-                        className="flex items-center gap-2 text-[#C84B31] font-bold text-sm hover:underline"
-                      >
-                        {t.common.viewResult} <ChevronRight className="w-4 h-4" />
-                      </Link>
-                    </>
-                  ) : (
-                    // ▶️ 응시 가능 상태
-                    <Link href={`/exam/start/${exam.id}`} className="w-full">
-                      <button className="w-full bg-[#2C241B] text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-[#C84B31] transition-colors shadow-lg">
-                        {t.exam.startExam}
-                        <ChevronRight className="w-5 h-5" />
-                      </button>
-                    </Link>
-                  )}
+                {/* 하단 액션 버튼 */}
+                <div className="border-t border-[#D8D3C8] pt-6">
+                  <Link href={`/exam/solve/${exam.id}`} className="w-full block">
+                    <button className="w-full bg-[#2C241B] text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-[#C84B31] transition-colors shadow-lg">
+                      {t.exam.startExam}
+                      <ChevronRight className="w-5 h-5" />
+                    </button>
+                  </Link>
                 </div>
               </div>
             ))

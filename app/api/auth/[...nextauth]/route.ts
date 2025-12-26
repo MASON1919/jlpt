@@ -28,9 +28,11 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         const dbUser = await prisma.user.findUnique({
           where: { email: user.email! },
+          select: { id: true, isAdmin: true },
         });
         if (dbUser) {
           token.id = dbUser.id;
+          token.isAdmin = dbUser.isAdmin;
         }
       }
       return token;
@@ -38,6 +40,7 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       if (session.user && token.id) {
         session.user.id = token.id as string;
+        session.user.isAdmin = token.isAdmin as boolean;
       }
       return session;
     },

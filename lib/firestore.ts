@@ -76,14 +76,6 @@ const createDefaultLevelStats = (): LevelStats => ({
   lastUpdated: null,
 });
 
-/**
- * Update problem statistics for a user
- * @param userId - User's unique identifier
- * @param level - JLPT level (1-5)
- * @param problemType - Main problem type
- * @param problemSubType - Detailed problem subtype
- * @param isCorrect - Whether the answer was correct
- */
 export async function updateProblemStats(
   userId: string,
   level: number,

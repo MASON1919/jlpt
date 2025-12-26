@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 // ============================================
@@ -84,6 +85,7 @@ model User {
   image        String?
   nativeLang   Language       @default(KO)
   targetLevel  Int            @default(1)
+  isAdmin      Boolean        @default(false)
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
   
@@ -162,24 +164,48 @@ model SubscriptionHistory {
 
 model Problem {
   id                  Int            @id @default(autoincrement())
-  level               Int
+  level               Int            // N1 ~ N5
   type                ProblemType
   subType             ProblemSubType
-  language            Language
-  question            Json
-  options             Json
-  explanation         Json
-  content             Json
-  vocab               Json?
-  grammar             Json?
+  
+  // 1. 지문 및 문제는 원문(일본어)만 저장 (String으로 단순화 가능)
+  content             String         @db.Text // 독해 지문 등 (번역 제외)
+  question            String         @db.Text // 문제 문장 (번역 제외)
+  options             Json           // ["선택지1", "선택지2", ...] - 배열 형태로 저장
+  
+  // 2. 해설과 단어만 다국어/상세 구조 유지
+  // 예: { "ko": "해설 내용", "en": "Explanation..." }
+  explanation         Json           
+  // 예: [{ "word": "...", "mean": "...", "reading": "..." }]
+  vocab               Json?          
+  
+  // 3. 모의고사 정보 추가 (단순 문자열 또는 별도 모델 연결)
+  mockExamTag         String?        // 예: "2023_1회_실전", "자체제작_A형"
+  
   answerIndex         Int
   audioUrl            String?
   imageUrl            String?
+  
+  // 관리용 데이터
   reasoning_for_level String?
   createdAt           DateTime       @default(now())
   updatedAt           DateTime       @updatedAt
+  
+  // 관계
   reviews             ReviewNote[]
   histories           SolveHistory[]
+  
+  // 만약 모의고사를 체계적으로 관리하고 싶다면 아래 MockExam 모델과 연결
+  mockExam            MockExam?      @relation(fields: [mockExamId], references: [id])
+  mockExamId          Int?
+}
+
+model MockExam {
+  id        Int       @id @default(autoincrement())
+  title     String    // 예: "2024년 제1회 JLPT 대비 모의고사"
+  level     Int       @default(1) // N1 ~ N5
+  problems  Problem[]
+  createdAt DateTime  @default(now())
 }
 
 model ReviewNote {

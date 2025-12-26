@@ -4,6 +4,7 @@ import React, { useEffect, useState, useCallback, Suspense } from "react"; // �
 import { useSearchParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { ArrowLeft, RefreshCw, BookOpen, AlertCircle, CheckCircle2, XCircle, Save } from "lucide-react";
+import { useLanguage } from "@/lib/i18n";
 
 // --- Types ---
 type MultiLangText = {
@@ -101,8 +102,10 @@ function SolveContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { data: session } = useSession();
+  const { language } = useLanguage();
   const level = searchParams.get("level");
   const type = searchParams.get("type");
+  const problemId = searchParams.get("problemId"); // Admin preview mode
 
   const [problem, setProblem] = useState<Problem | null>(null);
   const [loading, setLoading] = useState(true);
@@ -118,8 +121,6 @@ function SolveContent() {
   const [activeGrammar, setActiveGrammar] = useState<GrammarItem | null>(null);
 
   const fetchProblem = useCallback(async () => {
-    if (!level || !type) return;
-    
     setLoading(true);
     setError(null);
     setSelectedOption(null);
@@ -131,9 +132,22 @@ function SolveContent() {
     setActiveGrammar(null);
 
     try {
-      const res = await fetch(`/api/practice/problem?level=${level}&type=${type}`);
+      let url: string;
+      
+      if (problemId) {
+        // Admin preview mode - fetch specific problem by ID
+        url = `/api/problems/${problemId}`;
+      } else if (level && type) {
+        // Normal mode - fetch random problem by level/type
+        url = `/api/practice/problem?level=${level}&type=${type}`;
+      } else {
+        setLoading(false);
+        return;
+      }
+      
+      const res = await fetch(url);
       if (!res.ok) {
-        if (res.status === 404) throw new Error("조건에 맞는 문제가 없습니다.");
+        if (res.status === 404) throw new Error("문제를 찾을 수 없습니다.");
         throw new Error("서버 오류가 발생했습니다.");
       }
       const data = await res.json();
@@ -147,16 +161,14 @@ function SolveContent() {
     } finally {
       setLoading(false);
     }
-  }, [level, type]);
+  }, [level, type, problemId]);
 
   useEffect(() => {
-    if (!level || !type) {
-      // router.push는 렌더링 중에 바로 실행하면 안 되므로 useEffect 안에서 체크하거나
-      // 혹은 아래 렌더링 로직에서 null 리턴 처리
+    if (!problemId && (!level || !type)) {
       return; 
     }
     fetchProblem();
-  }, [level, type, fetchProblem]);
+  }, [level, type, problemId, fetchProblem]);
 
   const handleSubmit = async () => {
     if (selectedOption === null || !problem) return;
@@ -189,7 +201,7 @@ function SolveContent() {
   };
 
   // URL 파라미터가 없으면 리다이렉트 (useEffect에서 처리하지만 깜빡임 방지용)
-  if (!level || !type) {
+  if (!problemId && (!level || !type)) {
       // 여기서는 null을 리턴하고 useEffect에서 이동시킴
       return null; 
   }
@@ -356,10 +368,12 @@ function SolveContent() {
             <div className="bg-white rounded-2xl p-6 border border-[#D8D3C8] shadow-sm">
               <h3 className="text-lg font-bold text-[#2C241B] mb-4 flex items-center gap-2">
                 <BookOpen className="w-5 h-5 text-[#C84B31]" />
-                문제 해설
+                {language === "ko" ? "문제 해설" : "Explanation"}
               </h3>
               <div className="prose prose-stone max-w-none text-[#5D5548]">
-                <p className="whitespace-pre-line">{problem.explanation.ko}</p>
+                <p className="whitespace-pre-line">
+                  {language === "ko" ? problem.explanation.ko : (problem.explanation.en || problem.explanation.ko)}
+                </p>
               </div>
             </div>
 
@@ -404,10 +418,9 @@ function SolveContent() {
               </button>
             </div>
             <div className="pt-4 border-t border-[#F5F5F0]">
-              <p className="text-lg text-[#5D5548] font-medium">{activeVocab.meaning.ko}</p>
-              {activeVocab.meaning.en && (
-                <p className="text-sm text-[#5D5548]/60 mt-1">{activeVocab.meaning.en}</p>
-              )}
+              <p className="text-lg text-[#5D5548] font-medium">
+                {language === "ko" ? activeVocab.meaning.ko : (activeVocab.meaning.en || activeVocab.meaning.ko)}
+              </p>
             </div>
           </div>
         </div>
@@ -430,10 +443,9 @@ function SolveContent() {
             </div>
             {activeGrammar.meaning_simple && (
               <div className="pt-4 border-t border-[#F5F5F0]">
-                <p className="text-lg text-[#5D5548] font-medium">{activeGrammar.meaning_simple.ko}</p>
-                {activeGrammar.meaning_simple.en && (
-                  <p className="text-sm text-[#5D5548]/60 mt-1">{activeGrammar.meaning_simple.en}</p>
-                )}
+                <p className="text-lg text-[#5D5548] font-medium">
+                  {language === "ko" ? activeGrammar.meaning_simple.ko : (activeGrammar.meaning_simple.en || activeGrammar.meaning_simple.ko)}
+                </p>
               </div>
             )}
             {activeGrammar.explanation && (

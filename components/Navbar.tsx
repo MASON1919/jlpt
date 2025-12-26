@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useSession, signOut } from "next-auth/react";
 import { usePathname } from "next/navigation";
-import { User, BookOpen, PenTool, BarChart3 } from "lucide-react";
+import { User, PenTool, BarChart3, Shield } from "lucide-react";
 import { useLanguage } from "@/lib/i18n";
 
 export function Navbar() {
@@ -25,19 +25,11 @@ export function Navbar() {
           href="/"
           className="font-serif text-xl font-bold tracking-tighter text-[#2C241B] flex-shrink-0 mr-4"
         >
-          JLPT.<span className="text-[#C84B31]">M</span>
+          Ahiroo
         </Link>
 
         {/* 2. 메인 네비게이션 (중앙) */}
         <div className="hidden md:flex items-center space-x-1 lg:space-x-2 text-sm font-medium text-[#5D5548]">
-          <Link
-            href="/practice"
-            className="flex items-center gap-1.5 px-4 py-2 rounded-full hover:bg-[#EBE7DF] hover:text-[#C84B31] transition-all"
-          >
-            <BookOpen className="w-4 h-4" />
-            <span>{t.navbar.dailyPractice}</span>
-          </Link>
-
           <Link
             href="/exam"
             className="flex items-center gap-1.5 px-4 py-2 rounded-full hover:bg-[#EBE7DF] hover:text-[#C84B31] transition-all"
@@ -93,6 +85,15 @@ export function Navbar() {
                 >
                   <BarChart3 className="w-4 h-4 text-[#C84B31]" />
                 </Link>
+                {session.user?.isAdmin && (
+                  <Link 
+                    href="/admin" 
+                    className="bg-[#2C241B] p-1.5 rounded-full hover:bg-[#C84B31] transition-colors"
+                    title="Admin"
+                  >
+                    <Shield className="w-4 h-4 text-white" />
+                  </Link>
+                )}
                 <Link 
                   href="/mypage" 
                   className="bg-gray-100 p-1.5 rounded-full hover:bg-gray-200 transition-colors"
